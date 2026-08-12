@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мектептің Тәрбие Және Сынып Жетекшілері Порталы</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans text-gray-900">
+
+    <!-- КІРУ МОДАЛДЫҚ ТЕРЕЗЕСІ (АВТОРИЗАЦИЯ) -->
+    <div id="authModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 m-4">
+            <div class="text-center mb-6">
+                <h2 class="text-2xl font-bold text-indigo-700">Тәрбие Жүйесіне Кіру</h2>
+                <p class="text-sm text-gray-500 mt-1">Мектептің тәрбие бөлімі мен сынып жетекшілері порталы</p>
+            </div>
+
+            <!-- Кіру түрін таңдау -->
+            <div class="flex border-b mb-6">
+                <button onclick="switchTab('admin')" id="adminTabBtn" class="flex-1 py-2 font-semibold text-indigo-600 border-b-2 border-indigo-600 focus:outline-none">Администратор</button>
+                <button onclick="switchTab('teacher')" id="teacherTabBtn" class="flex-1 py-2 font-semibold text-gray-400 focus:outline-none">Сынып жетекші</button>
+            </div>
+
+            <!-- Админ кіру формасы (Google) -->
+            <div id="adminForm" class="space-y-4">
+                <p class="text-xs text-gray-600 text-center mb-2">Администратор жүйеге Google аккаунт арқылы кіреді.</p>
+                <button onclick="loginAsAdmin()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-xl py-3 px-4 text-gray-700 font-medium hover:bg-gray-50 transition shadow-sm">
+                    <i class="fab fa-google text-red-500"><span>Google арқылы кіру</span></i>
+                </button>
+            </div>
+
+            <!-- Сынып жетекші кіру формасы (Бір реттік код) -->
+            <div id="teacherForm" class="space-y-4 hidden">
+                <p class="text-xs text-gray-600 text-center mb-2">Администратор берген бір реттік кодты енгізіңіз:</p>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Бір реттік код немесе Логин</label>
+                    <input type="text" id="teacherCodeInput" placeholder="Мысалы: 5A-CODE-2026" class="w-full border rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <button onclick="loginAsTeacher()" class="w-full bg-indigo-600 text-white rounded-xl py-3 font-medium hover:bg-indigo-700 transition shadow-md">
+                    Жүйеге кіру
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- НЕГІЗГІ ҚОСЫМША ИНТЕРФЕЙСІ (Кіргеннен кейін көрінеді) -->
+    <div id="appContainer" class="hidden flex h-screen overflow-hidden">
+        
+        <!-- САЙДБАР (МАЗМҰН ТІЗІМІ) -->
+        <aside class="w-64 bg-indigo-900 text-white flex flex-col shadow-xl">
+            <div class="p-5 border-b border-indigo-800">
+                <h1 class="text-lg font-bold tracking-wide">Тәрбие Бөлімі</h1>
+                <p class="text-xs text-indigo-300 mt-0.5" id="userRoleDisplay">Администратор</p>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                <button onclick="changeSection('orders')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-indigo-800 text-white transition">
+                    <i class="fa-solid fa-file-shield w-5"></i> Тәрбие бұйрықтары
+                </button>
+                <button onclick="changeSection('folder')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-folder-open w-5"></i> Сынып папкасы
+                </button>
+                <button onclick="changeSection('parents')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-users w-5"></i> Ата-аналармен жұмыс
+                </button>
+                <button onclick="changeSection('docs')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-book-bookmark w-5"></i> Анықтамалар мен хаттамалар
+                </button>
+                <button onclick="changeSection('students')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-graduation-cap w-5"></i> Оқушы құжаттары
+                </button>
+                <button onclick="changeSection('events')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-calendar-days w-5"></i> Іс-шаралар мен тізім
+                </button>
+                <button onclick="changeSection('teachers')" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition">
+                    <i class="fa-solid fa-chalkboard-user w-5"></i> Сынып жетекшілер
+                </button>
+            </nav>
+            <div class="p-4 border-t border-indigo-800">
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 bg-indigo-800 hover:bg-red-600 text-indigo-200 hover:text-white py-2.5 rounded-xl text-sm transition">
+                    <i class="fa-solid fa-right-from-bracket"></i> Шығу
+                </button>
+            </div>
+        </aside>
+
+        <!-- НЕГІЗГІ МАЗМҰН АЙМАҒЫ -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Жоғарғы панель -->
+            <header class="h-16 bg-white border-b flex items-center justify-between px-6 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <h2 id="sectionTitle" class="text-xl font-bold text-gray-800">Тәрбие бұйрықтары</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Сынып комплектерін таңдау (1-11 сыныптар) -->
+                    <select id="classSelector" class="border rounded-lg px-3 py-1.5 text-sm bg-gray-50 focus:outline-none">
+                        <option value="all">Барлық сыныптар</option>
+                        <option value="1">1 сынып</option>
+                        <option value="2">2 сынып</option>
+                        <option value="3">3 сынып</option>
+                        <option value="4">4 сынып</option>
+                        <option value="5">5 сынып</option>
+                        <option value="6">6 сынып</option>
+                        <option value="7">7 сынып</option>
+                        <option value="8">8 сынып</option>
+                        <option value="9">9 сынып</option>
+                        <option value="10">10 сынып</option>
+                        <option value="11">11 сынып</option>
+                    </select>
+                    <span class="text-sm font-medium text-gray-600" id="currentSchoolName">Мектеп: Қорам орта мектебі</span>
+                </div>
+            </header>
+
+            <!-- Динамикалық контент аймағы -->
+            <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                
+                <!-- Іздеу және Батырмалар панелі -->
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+                    <div class="relative w-full md:w-96">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </span>
+                        <input type="text" id="searchInput" oninput="filterData()" placeholder="Іздеу (құжат, аты-жөні, тақырып)..." class="w-full pl-10 pr-4 py-2 bg-white border rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-sm">
+                    </div>
+                    <button onclick="openAddModal()" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2.5 rounded-xl text-sm flex items-center justify-center gap-2 shadow-md transition">
+                        <i class="fa-solid fa-plus"></i> Жаңа құжат / мәлімет қосу
+                    </button>
+                </div>
+
+                <!-- Мәліметтер кестесі / карточкалары -->
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse" id="dataTable">
+                            <thead class="bg-gray-100 text-gray-700 uppercase text-xs font-semibold">
+                                <tr id="tableHeader">
+                                    <!-- Динамикалық түрде өзгереді -->
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-200 text-sm text-gray-700">
+                                <!-- Динамикалық мәліметтер енгізіледі -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ЖАҢА МӘЛІМЕТ ҚОСУ МОДАЛДЫҚ ТЕРЕЗЕСІ -->
+    <div id="addModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 border-b pb-3">
+                <h3 id="modalTitle" class="text-lg font-bold text-gray-800">Жаңа жазба қосу</h3>
+                <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <form id="addItemForm" onsubmit="saveItem(event)" class="space-y-4">
+                <div id="dynamicFormFields">
+                    <!-- JavaScript арқылы бөлімге сай өрістер шығарылады -->
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Файл жүктеу (PDF, Word, Excel, PNG, Video)</label>
+                    <input type="file" id="fileInput" class="w-full border rounded-xl px-3 py-2 text-sm bg-gray-50 focus:outline-none" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.mp4">
+                    <p class="text-[11px] text-gray-500 mt-1">Қолданылатын форматтар: PDF, DOC, XLS, PNG, MP4</p>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 border rounded-xl text-sm text-gray-600 hover:bg-gray-100">Болдырмау</button>
+                    <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium shadow">Сақтау</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- СКРИПТ БӨЛІМІ (JavaScript логикасы) -->
+    <script>
+        // Деректер базасы (модельдік үлгі)
+        let currentSection = 'orders';
+        let userRole = 'admin'; // 'admin' немесе 'teacher'
+
+        const db = {
+            orders: [
+                { id: 1, title: '№45 Тәрбие жұмысы туралы бұйрық', date: '2026-08-10', classNum: 'Барлығы', file: 'tarbiy_order_45.pdf', type: 'PDF' },
+                { id: 2, title: 'Құқықбұзушылықтың алдын алу бұйрығы', date: '2026-08-05', classNum: 'Барлығы', file: 'order_prevention.docx', type: 'Word' }
+            ],
+            folder: [
+                { id: 1, title: 'Сынып жетекшінің жылдық жоспары', date: '2026-08-01', classNum: '5 "А"', file: 'plan_5a.docx', type: 'Word' },
+                { id: 2, title: 'Әлеуметтік паспорт', date: '2026-08-02', classNum: '7 "Б"', file: 'pasport_7b.xlsx', type: 'Excel' }
+            ],
+            parents: [
+                { id: 1, title: 'Ата-аналар жиналысының хаттамасы №1', date: '2026-08-03', classNum: '6 "А"', file: 'meeting_1.pdf', type: 'PDF' },
+                { id: 2, title: 'Психологиялық тренинг материалдары', date: '2026-08-04', classNum: '10 "А"', file: 'parent_training.png', type: 'PNG Фото' }
+            ],
+            docs: [
+                { id: 1, title: 'Оқушыларға арналған қауіпсіздік ережелері', date: '2026-08-01', classNum: 'Барлығы', file: 'safety.pdf', type: 'PDF' },
+                { id: 2, title: 'Жазғы демалыс ереже хаттамасы', date: '2026-08-02', classNum: 'Барлығы', file: 'holidays.docx', type: 'Word' }
+            ],
+            students: [
+                { id: 1, name: 'Асхатұлы Ерасыл', classNum: '8 "А"', quality: 'Үздік / Жоғары', docType: 'Жеке іс қағазы', file: 'erasyl_doc.pdf' },
+                { id: 2, name: 'Серікқызы Айзере', classNum: '5 "Б"', quality: 'Ерекше білім беруді қажет етеді (ЕБҚ)', docType: 'Медициналық-педагогикалық анықтама', file: 'aizere_ebq.pdf' }
+            ],
+            events: [
+                { id: 1, title: '«Білім күні» салтанатты линейкасы', date: '2026-09-01', classNum: 'Барлығы', qmj: 'qmj_1.docx', ktp: 'ktp_1.xlsx', media: 'event_video.mp4' },
+            ],
+            teachers: [
+                { id: 1, name: 'Абдрахманова Д.К.', classNum: '5 "А"', loginCode: 'TCH-5A-789', phone: '+7 701 123 4567' },
+                { id: 2, name: 'Қасымов Б.М.', classNum: '9 "Б"', loginCode: 'TCH-9B-456', phone: '+7 702 987 6543' }
+            ]
+        };
+
+        // Аутентификация қойындыларын ауыстыру
+        function switchTab(role) {
+            if(role === 'admin') {
+                document.getElementById('adminTabBtn').className = "flex-1 py-2 font-semibold text-indigo-600 border-b-2 border-indigo-600 focus:outline-none";
+                document.getElementById('teacherTabBtn').className = "flex-1 py-2 font-semibold text-gray-400 focus:outline-none";
+                document.getElementById('adminForm').classList.remove('hidden');
+                document.getElementById('teacherForm').classList.add('hidden');
+            } else {
+                document.getElementById('teacherTabBtn').className = "flex-1 py-2 font-semibold text-indigo-600 border-b-2 border-indigo-600 focus:outline-none";
+                document.getElementById('adminTabBtn').className = "flex-1 py-2 font-semibold text-gray-400 focus:outline-none";
+                document.getElementById('teacherForm').classList.remove('hidden');
+                document.getElementById('adminForm').classList.add('hidden');
+            }
+        }
+
+        function loginAsAdmin() {
+            userRole = 'admin';
+            document.getElementById('userRoleDisplay').innerText = 'Администратор (Google)';
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            renderTable();
+        }
+
+        function loginAsTeacher() {
+            const code = document.getElementById('teacherCodeInput').value.trim();
+            if(!code) {
+                alert('Өтінемін, админ берген бір реттік кодты енгізіңіз!');
+                return;
+            }
+            userRole = 'teacher';
+            document.getElementById('userRoleDisplay').innerText = 'Сынып жетекші (Код арқылы)';
+            document.getElementById('authModal').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            renderTable();
+        }
+
+        function logout() {
+            document.getElementById('authModal').classList.remove('hidden');
+            document.getElementById('appContainer').classList.add('hidden');
+        }
+
+        // Бөлімдерді ауыстыру
+        function changeSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-indigo-200 hover:bg-indigo-800 hover:text-white transition";
+            });
+            event.currentTarget.className = "nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium bg-indigo-800 text-white transition";
+            
+            const titles = {
+                orders: 'Тәрбие бұйрықтары',
+                folder: 'Сынып папкасы',
+                parents: 'Ата-аналармен жұмыс',
+                docs: 'Анықтамалар мен хаттамалар',
+                students: 'Оқушы құжаттары',
+                events: 'Іс-шаралар мен тізім (Видео, фото, ҚМЖ, КТП)',
+                teachers: 'Сынып жетекшілер тізімі'
+            };
+            document.getElementById('sectionTitle').innerText = titles[section];
+            renderTable();
+        }
+
+        // Кестені рендерлеу
+        function renderTable() {
+            const header = document.getElementById('tableHeader');
+            const body = document.getElementById('tableBody');
+            header.innerHTML = '';
+            body.innerHTML = '';
+
+            let data = db[currentSection];
+
+            if(currentSection === 'orders') {
+                header.innerHTML = <th class="px-6 py-3">№</th><th class="px-6 py-3">Бұйрық тақырыбы</th><th class="px-6 py-3">Күні</th><th class="px-6 py-3">Сынып</th><th class="px-6 py-3">Файл</th><th class="px-6 py-3 text-right">Әрекет</th>;
+                data.forEach((item, index) => {
+                    body.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${index + 1}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${item.title}</td>
+                        <td class="px-6 py-4">${item.date}</td>
+                        <td class="px-6 py-4">${item.classNum}</td>
+                        <td class="px-6 py-4"><a href="#" class="text-indigo-600 hover:underline flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> ${item.file}</a></td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            } else if(currentSection === 'folder' || currentSection === 'parents' || currentSection === 'docs') {
+                header.innerHTML = <th class="px-6 py-3">№</th><th class="px-6 py-3">Құжат атауы</th><th class="px-6 py-3">Күні</th><th class="px-6 py-3">Сынып</th><th class="px-6 py-3">Файл</th><th class="px-6 py-3 text-right">Әрекет</th>;
+                data.forEach((item, index) => {
+                    body.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${index + 1}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${item.title}</td>
+                        <td class="px-6 py-4">${item.date}</td>
+                        <td class="px-6 py-4">${item.classNum}</td>
+                        <td class="px-6 py-4"><a href="#" class="text-indigo-600 hover:underline flex items-center gap-1"><i class="fa-solid fa-file-arrow-down"></i> ${item.file}</a></td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            } else if(currentSection === 'students') {
+                header.innerHTML = <th class="px-6 py-3">№</th><th class="px-6 py-3">Оқушының Аты-жөні</th><th class="px-6 py-3">Сыныбы</th><th class="px-6 py-3">Сапалық құрамы</th><th class="px-6 py-3">Құжат түрі</th><th class="px-6 py-3">Файл</th><th class="px-6 py-3 text-right">Әрекет</th>;
+                data.forEach((item, index) => {
+                    body.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${index + 1}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${item.name}</td>
+                        <td class="px-6 py-4">${item.classNum}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded-md text-xs font-semibold">${item.quality}</span></td>
+                        <td class="px-6 py-4">${item.docType}</td>
+                        <td class="px-6 py-4"><a href="#" class="text-indigo-600 hover:underline"><i class="fa-solid fa-file-arrow-down"></i> ${item.file}</a></td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            } else if(currentSection === 'events') {
+                header.innerHTML = <th class="px-6 py-3">№</th><th class="px-6 py-3">Іс-шара атауы</th><th class="px-6 py-3">Күні</th><th class="px-6 py-3">Сынып</th><th class="px-6 py-3">ҚМЖ / КТП</th><th class="px-6 py-3">Видео/Фото</th><th class="px-6 py-3 text-right">Әрекет</th>;
+                data.forEach((item, index) => {
+                    body.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${index + 1}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${item.title}</td>
+                        <td class="px-6 py-4">${item.date}</td>
+                        <td class="px-6 py-4">${item.classNum}</td>
+                        <td class="px-6 py-4"><span class="text-xs text-blue-600">${item.qmj}</span> / <span class="text-xs text-green-600">${item.ktp}</span></td>
+                        <td class="px-6 py-4"><a href="#" class="text-indigo-600 hover:underline"><i class="fa-solid fa-video"></i> ${item.media}</a></td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            } else if(currentSection === 'teachers') {
+                header.innerHTML = <th class="px-6 py-3">№</th><th class="px-6 py-3">Мұғалімнің Аты-жөні</th><th class="px-6 py-3">Жетекшілік сыныбы</th><th class="px-6 py-3">Кіру коды (Пароль)</th><th class="px-6 py-3">Телефон нөмірі</th><th class="px-6 py-3 text-right">Әрекет</th>;
+                data.forEach((item, index) => {
+                    body.innerHTML += `<tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">${index + 1}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${item.name}</td>
+                        <td class="px-6 py-4">${item.classNum}</td>
+                        <td class="px-6 py-4"><code class="bg-gray-100 px-2 py-1 rounded text-indigo-600 font-bold">${item.loginCode}</code></td>
+                        <td class="px-6 py-4">${item.phone}</td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            }
+        }
+
+        // Модаль терезені ашу және жабу
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            const container = document.getElementById('dynamicFormFields');
+            container.innerHTML = '';
+
+            if(currentSection === 'students') {
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Оқушының Аты-жөні</label>
+                        <input type="text" id="inputName" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Сыныбы</label>
+                        <input type="text" id="inputClass" placeholder="Мысалы: 8 А" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Сапалық құрамы (Үздік, ЕБҚ, Ерекше т.б.)</label>
+                        <input type="text" id="inputQuality" placeholder="Мысалы: Ерекше білім беруді қажет етеді (ЕБҚ)" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Құжат түрі</label>
+                        <input type="text" id="inputDocType" placeholder="Мысалы: Жеке іс қағазы" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                `;
+            } else if(currentSection === 'teachers') {
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Мұғалімнің Аты-жөні</label>
+                        <input type="text" id="inputTeacherName" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Жетекшілік сыныбы</label>
+                        <input type="text" id="inputTeacherClass" placeholder="Мысалы: 5 Б" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Бір реттік кіру коды (Пароль)</label>
+                        <input type="text" id="inputTeacherCode" placeholder="Мысалы: TCH-5B-999" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Телефон нөмірі</label>
+                        <input type="text" id="inputTeacherPhone" placeholder="+7..." required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Құжат / Іс-шара атауы</label>
+                        <input type="text" id="inputTitle" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-700 mb-1">Сынып комплектісі</label>
+                        <input type="text" id="inputClassNum" placeholder="Мысалы: 6 А немесе Барлығы" required class="w-full border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                `;
+            }
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+        }
+
+        // Жаңа мәліметті сақтау
+        function saveItem(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById('fileInput');
+            const fileName = fileInput.files.length > 0 ? fileInput.files[0].name : 'жуктелген_файл.pdf';
+
+            if(currentSection === 'students') {
+                db.students.push({
+                    id: Date.now(),
+                    name: document.getElementById('inputName').value,
+                    classNum: document.getElementById('inputClass').value,
+                    quality: document.getElementById('inputQuality').value,
+                    docType: document.getElementById('inputDocType').value,
+                    file: fileName
+                });
+            } else if(currentSection === 'teachers') {
+                db.teachers.push({
+                    id: Date.now(),
+                    name: document.getElementById('inputTeacherName').value,
+                    classNum: document.getElementById('inputTeacherClass').value,
+                    loginCode: document.getElementById('inputTeacherCode').value,
+                    phone: document.getElementById('inputTeacherPhone').value
+                });
+            } else {
+                db[currentSection].push({
+                    id: Date.now(),
+                    title: document.getElementById('inputTitle').value,
+                    date: new Date().toISOString().split('T')[0],
+                    classNum: document.getElementById('inputClassNum').value,
+                    file: fileName,
+                    qmj: 'qmj_file.docx',
+                    ktp: 'ktp_file.xlsx',
+                    media: fileName
+                });
+            }
+
+            closeAddModal();
+            renderTable();
+        }
+
+        // Жою
+        function deleteItem(id) {
+            if(confirm('Бұл жазбаны жоюды растайсыз ба?')) {
+                db[currentSection] = db[currentSection].filter(item => item.id !== id);
+                renderTable();
+            }
+        }
+
+        // Іздеу функциясы
+        function filterData() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            // Қарапайым іздеу фильтрациясы логикасы
+        }
+    </script>
+</body>
+</html>
